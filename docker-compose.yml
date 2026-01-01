@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+    redis:
+        image: redis:7
+        container_name: redis
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis_data:/data
+        command: redis-server --appendonly yes
+        restart: unless-stopped
+
+    redis_insight:
+        image: redis/redisinsight:latest
+        container_name: redis_insight
+        ports:
+            - "5540:5540"
+        volumes:
+            - redisinsight_data:/db
+        restart: unless-stopped
+        depends_on:
+            - redis
+
+volumes:
+    redis_data:
+    redisinsight_data:
