@@ -5,6 +5,7 @@ interface User {
     password: string;
     messages: Message[];
     isActive: boolean;
+    image: string;
 }
 
 interface Message {
@@ -60,7 +61,8 @@ const users: User[] = [
         email:"ram@gmail.com",
         password:"123456",
         messages: user1Msg,
-        isActive: false
+        isActive: false,
+        image:''
     },
     {
         id:'user-2',
@@ -68,7 +70,8 @@ const users: User[] = [
         email:"hari@gmail.com",
         password:"123456",
         messages: user2Msg,
-        isActive: false
+        isActive: false,
+        image:''
     },
     {
         id:'user-3',
@@ -76,7 +79,8 @@ const users: User[] = [
         email:"rita@gmail.com",
         password:"123456",
         messages: user3Msg,
-        isActive: false
+        isActive: false,
+        image:''
     },
     
 ]
