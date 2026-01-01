@@ -1,4 +1,4 @@
-interface User {
+export interface User {
     id: string;
     username: string;
     email: string;
@@ -8,7 +8,7 @@ interface User {
     image: string;
 }
 
-interface Message {
+export interface Message {
     id: string;
     userId: string;
     sentTo: string;

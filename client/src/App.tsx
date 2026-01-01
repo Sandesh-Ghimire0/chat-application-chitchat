@@ -3,6 +3,7 @@ import MainLayout from "./components/MainLayout";
 import Chat from "./pages/Chat";
 import ChatRoom from "./pages/ChatRoom";
 import VideoCall from "./pages/VideoCall";
+import Login from "./pages/Login";
 
 export default function App() {
     return (
@@ -10,14 +11,13 @@ export default function App() {
             <Routes>
                 {/* Layout route */}
                 <Route element={<MainLayout />}>
-                    <Route path="/" element={<Chat />} />
                     <Route path="/chat" element={<Chat />} />
                     <Route path="/chat-room" element={<ChatRoom />} />
                     <Route path="/video-call" element={<VideoCall />} />
                 </Route>
 
                 {/* Routes WITHOUT navbar */}
-                {/* <Route path="/login" element={<Login />} /> */}
+                <Route path="/" element={<Login />} />
             </Routes>
         </BrowserRouter>
     );

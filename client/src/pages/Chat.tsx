@@ -1,81 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useAppSelector } from "../hooks/dispatchSelector";
 
-interface Clients {
-    clientId: string;
-    username: string;
-}
 
-const WS_URL = import.meta.env.VITE_WS_URL;
-
-function App() {
-    const socketRef = useRef<WebSocket | null>(null);
-    const [messages, setMessages] = useState<
-        Array<{ sendBy: string; sendTo: string; message: string }>
-    >([]);
-    const [input, setInput] = useState<string>("");
-    const [clients, setClients] = useState<Clients[]>([]);
-    const [clientId, setClientId] = useState<string>("");
-    const [targetId, setTargetId] = useState<string>("");
-    const [targetName, setTargetName] = useState<string>("");
-
-    useEffect(() => {
-        const socket = new WebSocket(WS_URL);
-        socketRef.current = socket;
-
-        socket.onopen = () => {
-            console.log("Client connected to ", WS_URL);
-        };
-
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            if (data.type === "client-id") {
-                setClientId(data.clientId);
-            }
-
-            if (data.type === "all-clients") {
-                setClients(data.allClients);
-            }
-
-            if (data.type === "chat-message") {
-                setMessages((prev) => [
-                    ...prev,
-                    {
-                        sendBy: data.sendBy,
-                        sendTo: data.sendTo,
-                        message: data.message,
-                    },
-                ]);
-            }
-        };
-
-        socket.onerror = (error) => {
-            console.log("Socket error: ", error);
-        };
-
-        return () => {
-            console.log("clean up code");
-            socket.close();
-        };
-    }, []);
-
-    const sendMessage = () => {
-        if (socketRef.current?.readyState === WebSocket.OPEN) {
-            socketRef.current.send(
-                JSON.stringify({
-                    from: clientId,
-                    to: targetId,
-                    message: input,
-                })
-            );
-            setInput("");
-        }
-    };
-
-    const handleTargetClick = (id: string, username: string) => {
-        setTargetId(id);
-        setTargetName(username);
-    };
+function Chat() {
+    const friends = useAppSelector( state => state.friend)
 
     return (
         <>
@@ -84,18 +11,12 @@ function App() {
                 <div className="w-1/4 bg-white rounded-lg shadow p-4 overflow-y-auto">
                     <h2 className="text-xl font-semibold mb-4">Clients</h2>
                     <ul className="space-y-2">
-                        {clients?.map((client) => (
+                        {friends?.map((friend) => (
                             <li
-                                key={client.clientId}
-                                onClick={() =>
-                                    handleTargetClick(
-                                        client.clientId,
-                                        client.username
-                                    )
-                                }
+                                key={friend.id}
                                 className="cursor-pointer p-2 rounded hover:bg-blue-100 transition"
                             >
-                                {client.username}
+                                {friend.username}
                             </li>
                         ))}
                     </ul>
@@ -104,12 +25,12 @@ function App() {
                 {/* Right Section */}
                 <div className="flex-1 bg-white rounded-lg shadow p-4 flex flex-col">
                     <h2 className="text-xl font-semibold mb-4">
-                        Send message to {targetName}
+                        Send message to
                     </h2>
 
                     {/* Messages */}
                     <ul className="flex-1 flex flex-col overflow-y-auto space-y-2 pb-4">
-                        {messages?.map((msg, i) => {
+                        {/* {messages?.map((msg, i) => {
                             if (
                                 msg.sendBy === targetId ||
                                 msg.sendTo === targetId
@@ -127,25 +48,25 @@ function App() {
                                     </li>
                                 );
                             }
-                        })}
+                        })} */}
                     </ul>
 
                     {/* Fixed Input Section */}
                     <div className="flex gap-2 border-t pt-3">
                         <input
                             type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    sendMessage();
-                                }
-                            }}
+                            // value={input}
+                            // onChange={(e) => setInput(e.target.value)}
+                            // onKeyDown={(e) => {
+                            //     if (e.key === "Enter") {
+                            //         sendMessage();
+                            //     }
+                            // }}
                             className="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                             placeholder="Type a message..."
                         />
                         <button
-                            onClick={sendMessage}
+                            // onClick={sendMessage}
                             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
                         >
                             Send
@@ -157,4 +78,4 @@ function App() {
     );
 }
 
-export default App;
+export default Chat;
