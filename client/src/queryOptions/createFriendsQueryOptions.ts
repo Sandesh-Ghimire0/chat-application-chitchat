@@ -4,10 +4,10 @@ import type { Friend } from "../types/client";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL
 
-export function createFriendsQueryOptions() {
+export function createFriendsQueryOptions(userId: string) {
     return queryOptions({
         queryKey: ["friends"],
-        queryFn: () => getFriends('user-1'),
+        queryFn: () => getFriends(userId),
     });
 }
 

@@ -1,27 +1,34 @@
 import { useState } from "react";
-import {  loginUser } from "../services/auth";
+import { loginUser } from "../services/auth";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { login } from "../store/authSlice";
+import { useMutation } from "@tanstack/react-query";
+import type { LoginUser } from "../types/client";
 
 function Login() {
-    const navigate = useNavigate()
-    const dispatch = useDispatch()
+    const navigate = useNavigate();
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
+    const loginMutation = useMutation({
+        mutationFn: (user: LoginUser) => loginUser(user),
+        onSuccess: (data) => {
+            localStorage.setItem("token",JSON.stringify(data.token))
+            navigate("/chat");
+        },
+        onError: (error) => {
+            console.log("Error occured while logging user", error);
+        },
+    });
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        const res = await loginUser({email, password});
-        if(res?.status === 200){
-            dispatch(login(res.data))
-            navigate('/chat')
-        }else {
-            alert("ERROR..!!!!")
-        }
-        
+        loginMutation.mutate({ email, password });
     };
+
+    if (loginMutation.isPending) {
+        return <h1 className="text-3xl font-semibold">Loading</h1>;
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">

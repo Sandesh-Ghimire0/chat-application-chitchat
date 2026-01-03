@@ -5,10 +5,10 @@ import type { Message } from "../types/message";
 const BASE_URL = import.meta.env.VITE_BASE_URL
 
 
-export function createMessagesQueryOptions() {
+export function createMessagesQueryOptions(userId: string) {
     return queryOptions({
         queryKey: ["message"],
-        queryFn: () => getMessages('user-1'),
+        queryFn: () => getMessages(userId),
     });
 }
 
