@@ -1,18 +1,23 @@
 import { WebSocketServer } from "ws";
 import type { Server as HttpServer } from "http";
+import WebSocket from "ws";
+import { nanoid } from "nanoid";
 import type { ClientSocket } from "../types/socket.js";
 import type {
     ClientToServerMessage,
     ServerToClientMessage,
 } from "../types/message.js";
 import { redisService } from "./redis.service.js";
-import { users } from "../data/data.js";
+import { raw } from "express";
 
 export class WebSocketService {
     private wss: WebSocketServer;
 
     private myClients = new Map<string, ClientSocket>(); // why ?
-    private otherClients: string[] = [];
+    private otherClients = new Map<string, string>();
+
+    private Users: string[] = ["Ram", "Shyam", "Hari", "Sita"];
+    private countUser: number = 0;
 
     constructor(server: HttpServer) {
         this.wss = new WebSocketServer({ server });
@@ -35,92 +40,102 @@ export class WebSocketService {
     //                                               handle connection
     ===============================================================================================================*/
     private handleConnection(socket: ClientSocket) {
+        const clientId: string = nanoid();
+        socket.clientId = clientId;
+
+        const username = this.Users[this.countUser];
+        if (username !== undefined) {
+            socket.username = username;
+            this.countUser += 1;
+        }
+
+        this.myClients.set(clientId, socket);
+
+        username
+            ? console.log(`${username} connected`)
+            : console.log(`${clientId} connected`);
+
+        this.sendClientId(socket);
+
+        redisService.publish(
+            "CLIENTS",
+            JSON.stringify({ type: "connect", clientId, username })
+        );
+
         socket.on("message", async (rawData) => {
-            const data: ClientToServerMessage = JSON.parse(rawData.toString());
-            if (data.type === "connect") {
-                this.activateUser(data.userId, socket);
-            }
-
-            if (this.myClients.has(data.to)) {
-                this.onRedisMessage(rawData.toString());
-            } else {
+            const data: ClientToServerMessage = JSON.parse(rawData.toString())
+            if(this.myClients.has(data.to)){
+                this.onRedisMessage(rawData.toString())
+            }else {
                 redisService.publish("MESSAGES", rawData.toString());
-            }
-
-            if (data.type === "disconnect") {
-                this.handleDisconnect(data.userId);
             }
         });
 
         socket.on("close", () => {
-            const userId = socket.userId;
-            if (userId) {
-                this.handleDisconnect(userId);
-            }
+            this.handleDisconnect(clientId, username);
         });
     }
 
-    private activateUser(userId: string, socket: ClientSocket) {
-        socket.userId = userId;
-        this.myClients.set(userId, socket);
-        const user = users.find((user) => user.id === userId);
-        if (user) {
-            user.isActive = true;
-        }
-        console.log(`${userId} connected`);
-        redisService.publish(
-            "CLIENTS",
-            JSON.stringify({ type: "connect", userId })
-        );
+    /*============================================================================================================
+    //                                               send clientId
+    ===============================================================================================================*/
+    private sendClientId(socket: ClientSocket) {
+        const payload: ServerToClientMessage = {
+            type: "client-id",
+            clientId: socket.clientId,
+        };
+        socket.send(JSON.stringify(payload));
     }
 
     /*============================================================================================================
     //                                              listen to CLIENTS channel
     ===============================================================================================================*/
     private onRedisClients(redisClients: string) {
-        const { type, userId } = JSON.parse(redisClients);
+        const { type, clientId, username } = JSON.parse(redisClients);
 
         if (type === "disconnect") {
-            const user = users.find((user) => user.id === userId);
-            if (user) {
-                user.isActive = false;
-            }
-            const index = this.otherClients.indexOf(userId);
-            if (index !== -1) {
-                this.otherClients.splice(index, 1);
-            }
+            this.otherClients.delete(clientId);
         }
 
-        if (type === "connect" && !this.myClients.has(userId)) {
-            this.otherClients.push(userId);
+        if (type === "connect" && !this.myClients.has(clientId)) {
+            this.otherClients.set(clientId, username);
         }
-        this.boardcastClientList(type, userId);
+        this.boardcastClientList();
     }
 
     /*============================================================================================================
     //                                              send all clients to each server
     ===============================================================================================================*/
-    private boardcastClientList(type: string, userId: string) {
-        this.wss.clients.forEach((client) => {
+    private boardcastClientList() {
+        this.wss.clients.forEach((client)   => {
             const currSocket = client as ClientSocket;
-            console.log(currSocket.userId)
 
-            // const sameServerClients = [...this.myClients]
+            const sameServerClients = [...this.myClients].flatMap(
+                ([clientId, socket]) =>
+                    currSocket.clientId !== clientId
+                        ? [
+                              {
+                                  clientId: clientId,
+                                  username: socket.username ?? "",
+                              },
+                          ]
+                        : []
+            );
 
-            if (currSocket.userId !== userId) {
-                const payload =
-                    type === "connect"
-                        ? {
-                              type: "active-user",
-                              activeUserId: userId,
-                          }
-                        : {
-                              type: "deactive-user",
-                              deactiveUserId: userId,
-                          };
+            const otherServerClients = [...this.otherClients].map(
+                ([clientId, username]) => ({
+                    clientId,
+                    username,
+                })
+            );
 
-                currSocket.send(JSON.stringify(payload));
-            }
+            const allClients = [...sameServerClients, ...otherServerClients];
+
+            const payload: ServerToClientMessage = {
+                type: "all-clients",
+                allClients: allClients,
+            };
+            currSocket.send(JSON.stringify(payload));
         });
     }
 
@@ -142,7 +157,7 @@ export class WebSocketService {
         const receiverSocket = this.myClients.get(to);
         receiverSocket?.send(JSON.stringify(payload));
 
-        // echo back to sender
+        // echo back to sender  
         const senderSocket = this.myClients.get(from);
         senderSocket?.send(JSON.stringify(payload));
     }
@@ -150,18 +165,19 @@ export class WebSocketService {
     /*============================================================================================================
     //                                               handle disconnection
     ===============================================================================================================*/
-    private handleDisconnect(userId: string) {
-        this.myClients.delete(userId);
+    private handleDisconnect(clientId: string, username?: string) {
+        this.myClients.delete(clientId);
 
         redisService.publish(
             "CLIENTS",
             JSON.stringify({
                 type: "disconnect",
-                userId,
+                clientId,
+                username,
             })
         );
 
-        console.log(`${userId} Disconnected`);
+        console.log(`${username} Disconnected`);
     }
 }
 

@@ -3,10 +3,10 @@ import { createFriendsQueryOptions } from "../queryOptions/createFriendsQueryOpt
 import { useNavigate } from "react-router-dom";
 
 interface FriendProps {
-    userId: string
+    userId: string;
 }
 
-function Friend({userId}: FriendProps) {
+function Friends({ userId }: FriendProps) {
     const { data: friends } = useQuery(createFriendsQueryOptions(userId));
     const navigate = useNavigate();
 
@@ -19,12 +19,18 @@ function Friend({userId}: FriendProps) {
             <h2 className="text-xl font-semibold mb-4">Clients</h2>
             <ul className="space-y-2">
                 {friends?.map((friend) => (
-                    <li
-                        key={friend.id}
-                        onClick={() => handleTargetClick(friend.id)}
-                        className="cursor-pointer p-2 rounded hover:bg-blue-100 transition"
-                    >
-                        {friend.username}
+                    <li className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-blue-100 transition">
+                        <div
+                            key={friend.id}
+                            onClick={() => handleTargetClick(friend.id)}
+                        >
+                            {friend.username}
+                        </div>
+                        {friend.isActive ? (
+                            <div className="text-green-500 text-sm">Active</div>
+                        ) : (
+                            ""
+                        )}
                     </li>
                 ))}
             </ul>
@@ -32,4 +38,4 @@ function Friend({userId}: FriendProps) {
     );
 }
 
-export default Friend;
+export default Friends;

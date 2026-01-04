@@ -2,6 +2,8 @@ export interface ClientToServerMessage {
     from: string;
     to: string;
     message: string;
+    type?: string
+    userId: string
 }
 
 export interface ServerToClientMessage {
