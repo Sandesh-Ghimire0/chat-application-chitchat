@@ -11,7 +11,7 @@ export interface User {
 export interface Message {
     id: string;
     userId: string;
-    sentTo: string;
+    to: string;
     content: string;
 }
 
@@ -19,31 +19,31 @@ const messages: Message[] = [
     {
         id: "msg-1",
         userId: "user-1",
-        sentTo: "user-2",
+        to: "user-2",
         content: "hello",
     },
     {
         id: "msg-2",
         userId: "user-2",
-        sentTo: "user-1",
+        to: "user-1",
         content: "Hiiii",
     },
     {
         id: "msg-3",
         userId: "user-2",
-        sentTo: "user-1",
+        to: "user-1",
         content: "do you need something",
     },
     {
         id: "msg-4",
         userId: "user-3",
-        sentTo: "user-2",
+        to: "user-2",
         content: "hello 2 from 3",
     },
     {
         id: "msg-5",
         userId: "user-1",
-        sentTo: "user-3",
+        to: "user-3",
         content: "hello 3333",
     },
 ];

@@ -1,12 +1,10 @@
 import { WebSocketServer } from "ws";
 import type { Server as HttpServer } from "http";
-import type { ClientSocket } from "../types/socket.js";
-import type {
-    ClientToServerMessage,
-    ServerToClientMessage,
-} from "../types/message.js";
+import type { ClientSocket } from "../types/type.js";
+import type { Message } from "../types/type.js";
 import { redisService } from "./redis.service.js";
-import { users } from "../data/data.js";
+import { messages, users } from "../data/data.js";
+import { nanoid } from "nanoid";
 
 export class WebSocketService {
     private wss: WebSocketServer;
@@ -36,12 +34,12 @@ export class WebSocketService {
     ===============================================================================================================*/
     private handleConnection(socket: ClientSocket) {
         socket.on("message", async (rawData) => {
-            const data: ClientToServerMessage = JSON.parse(rawData.toString());
+            const data: Message = JSON.parse(rawData.toString());
             if (data.type === "connect") {
                 this.activateUser(data.userId, socket);
             }
 
-            if (this.myClients.has(data.to)) {
+            if (data.type === "chat-message" && this.myClients.has(data.to)) {
                 this.onRedisMessage(rawData.toString());
             } else {
                 redisService.publish("MESSAGES", rawData.toString());
@@ -103,7 +101,6 @@ export class WebSocketService {
     private boardcastClientList(type: string, userId: string) {
         this.wss.clients.forEach((client) => {
             const currSocket = client as ClientSocket;
-            console.log(currSocket.userId)
 
             // const sameServerClients = [...this.myClients]
 
@@ -128,14 +125,24 @@ export class WebSocketService {
     //                                               Listen to MESSAGES channel
     ===============================================================================================================*/
     private onRedisMessage(redisMessage: string) {
-        const data: ClientToServerMessage = JSON.parse(redisMessage);
-        const { from, to, message } = data;
+        const data: Message = JSON.parse(redisMessage);
+        const { userId, to, content } = data;
 
-        const payload: ServerToClientMessage = {
+        const msgId: string = nanoid();
+        const msg: Message = {
+            id: msgId,
+            userId,
+            to,
+            content,
+        };
+        messages.push(msg);
+
+        const payload: Message = {
             type: "chat-message",
-            sendBy: from,
-            sendTo: to,
-            message,
+            id: msgId,
+            userId,
+            to,
+            content,
         };
 
         // send to receiver
@@ -143,7 +150,7 @@ export class WebSocketService {
         receiverSocket?.send(JSON.stringify(payload));
 
         // echo back to sender
-        const senderSocket = this.myClients.get(from);
+        const senderSocket = this.myClients.get(userId);
         senderSocket?.send(JSON.stringify(payload));
     }
 
@@ -164,56 +171,3 @@ export class WebSocketService {
         console.log(`${userId} Disconnected`);
     }
 }
-
-/*
-    private async handleMessage(socket: ClientSocket, rawData: string) {
-        await sub.subscribe("MESSAGES", (message) => {
-            const data: ClientToServerMessage = JSON.parse(message);
-            console.log(data);
-
-            const { to, msg } = data;
-            const senderId = socket.clientId;
-            const receiverSocket = this.myClients.get(to);
-
-            const payload: ServerToClientMessage = {
-                type: "chat-message",
-                sendBy: senderId,
-                sendTo: to,
-                message: msg,
-            };
-
-            // send to receiver
-            receiverSocket?.send(JSON.stringify(payload));
-
-            // echo back to sender
-            socket.send(JSON.stringify(payload));
-        });
-    }
-
-
-    private broadcastClientList() {
-        this.wss.clients.forEach((client) => {
-            const currSocket = client as ClientSocket;
-
-            const allClients = [...this.myClients].flatMap(
-                ([clientId, socket]) =>
-                    currSocket.clientId !== clientId
-                        ? [
-                              {
-                                  clientId: clientId,
-                                  username: socket.username ?? "",
-                              },
-                          ]
-                        : []
-            );
-
-            const payload: ServerToClientMessage = {
-                type: "all-clients",
-                allClients: allClients,
-            };
-
-            currSocket.send(JSON.stringify(payload));
-        });
-    }
-
-*/

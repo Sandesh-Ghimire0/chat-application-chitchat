@@ -1,15 +1,16 @@
 import { useAuthUser } from "../hooks/useAuthUser";
-import type { Friend, User } from "../types/client";
+import type { Friend, User } from "../types/type";
 import { useParams } from "react-router-dom";
-import Message from "../components/Message";
+import Messages from "../components/Messages";
 import Friends from "../components/Friends";
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import type { Message } from "../types/type";
 
 const WS_URL = import.meta.env.VITE_WS_URL;
 
 function Chat() {
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const user = useAuthUser() as User;
 
     const queryClient = useQueryClient();
@@ -30,7 +31,7 @@ function Chat() {
         };
 
         socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+            const data: Message = JSON.parse(event.data);
             if (data.type === "active-user") {
                 queryClient.setQueryData(["friends"], (old: Friend[]) => {
                     return old?.map((friend) => ({
@@ -45,7 +46,6 @@ function Chat() {
 
             if (data.type === "deactive-user") {
                 queryClient.setQueryData(["friends"], (old: Friend[]) => {
-                    console.log(data);
                     return old?.map((friend) => ({
                         ...friend,
                         isActive:
@@ -53,6 +53,20 @@ function Chat() {
                                 ? false
                                 : friend.isActive,
                     }));
+                });
+            }
+
+            if (data.type === "chat-message") {
+                queryClient.setQueryData(["message"], (old: Message[]) => {
+                    return [
+                        ...old,
+                        {
+                            id: data.id,
+                            userId: data.userId,
+                            to: data.to,
+                            content: data.content,
+                        },
+                    ];
                 });
             }
         };
@@ -63,6 +77,19 @@ function Chat() {
         };
     }, []);
 
+    const sendMessage = (msg: string) => {
+        if (!id) return;
+        const payload: Message = {
+            type: "chat-message",
+            userId: user.id,
+            to: id,
+            content: msg,
+        };
+        if (socketRef.current?.readyState === WebSocket.OPEN) {
+            socketRef.current.send(JSON.stringify(payload));
+        }
+    };
+
     return (
         <>
             <div className="flex h-full p-4 gap-4">
@@ -72,7 +99,11 @@ function Chat() {
                 {/* Right Section */}
                 <div className="flex-1 bg-white rounded-lg shadow p-4 flex flex-col">
                     {id ? (
-                        <Message userId={user.id} targetId={id} />
+                        <Messages
+                            userId={user.id}
+                            targetId={id}
+                            sendMessage={sendMessage}
+                        />
                     ) : (
                         <div className="text-4xl font-semibold">
                             Welcome to ChitChat
