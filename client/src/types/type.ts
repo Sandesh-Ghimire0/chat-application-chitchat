@@ -18,12 +18,28 @@ export interface Friend {
     image: string;
 }
 
-export interface Message {
-    type: "active-user" | "deactive-user" | "chat-message";
-    id?: string;
+export interface ConnectUserMessage {
+    type: "connect";
     userId: string;
+}
+
+
+export interface ActiveUserMessage {
+    type: "active-user";
+    activeUserId: string;
+}
+
+export interface DeactiveUserMessage {
+    type: "deactive-user";
+    deactiveUserId: string;
+}
+
+export interface ChatMessage {
+    type: "chat-message";
+    id?: string; // added in backend
+    from: string;
     to: string;
     content: string;
-    activeUserId?: string;
-    deactiveUserId?: string
 }
+
+export type Message = ActiveUserMessage | DeactiveUserMessage | ChatMessage;

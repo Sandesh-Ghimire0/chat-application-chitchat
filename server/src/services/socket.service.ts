@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import type { Server as HttpServer } from "http";
-import type { ClientSocket } from "../types/type.js";
+import type { ChatMessage, ClientSocket } from "../types/type.js";
 import type { Message } from "../types/type.js";
 import { redisService } from "./redis.service.js";
 import { messages, users } from "../data/data.js";
@@ -92,17 +92,15 @@ export class WebSocketService {
         if (type === "connect" && !this.myClients.has(userId)) {
             this.otherClients.push(userId);
         }
-        this.boardcastClientList(type, userId);
+        this.boardcastUserConnection(type, userId);
     }
 
     /*============================================================================================================
     //                                              send all clients to each server
     ===============================================================================================================*/
-    private boardcastClientList(type: string, userId: string) {
+    private boardcastUserConnection(type: string, userId: string) {
         this.wss.clients.forEach((client) => {
             const currSocket = client as ClientSocket;
-
-            // const sameServerClients = [...this.myClients]
 
             if (currSocket.userId !== userId) {
                 const payload =
@@ -125,13 +123,13 @@ export class WebSocketService {
     //                                               Listen to MESSAGES channel
     ===============================================================================================================*/
     private onRedisMessage(redisMessage: string) {
-        const data: Message = JSON.parse(redisMessage);
-        const { userId, to, content } = data;
+        const data: ChatMessage = JSON.parse(redisMessage);
+        const { from, to, content } = data;
 
         const msgId: string = nanoid();
-        const msg: Message = {
+        const msg: Omit<ChatMessage,'type'> = {
             id: msgId,
-            userId,
+            from,
             to,
             content,
         };
@@ -140,7 +138,7 @@ export class WebSocketService {
         const payload: Message = {
             type: "chat-message",
             id: msgId,
-            userId,
+            from,
             to,
             content,
         };
@@ -150,7 +148,7 @@ export class WebSocketService {
         receiverSocket?.send(JSON.stringify(payload));
 
         // echo back to sender
-        const senderSocket = this.myClients.get(userId);
+        const senderSocket = this.myClients.get(from);
         senderSocket?.send(JSON.stringify(payload));
     }
 

@@ -1,5 +1,5 @@
 import { useAuthUser } from "../hooks/useAuthUser";
-import type { Friend, User } from "../types/type";
+import type {  ConnectUserMessage, Friend, User } from "../types/type";
 import { useParams } from "react-router-dom";
 import Messages from "../components/Messages";
 import Friends from "../components/Friends";
@@ -22,11 +22,12 @@ function Chat() {
 
         socket.onopen = () => {
             console.log("User connected to ", WS_URL);
+            const payload: ConnectUserMessage = {
+                type: "connect",
+                userId: user.id
+            }
             socket.send(
-                JSON.stringify({
-                    type: "connect",
-                    userId: user.id,
-                })
+                JSON.stringify(payload)
             );
         };
 
@@ -62,7 +63,7 @@ function Chat() {
                         ...old,
                         {
                             id: data.id,
-                            userId: data.userId,
+                            from: data.from,
                             to: data.to,
                             content: data.content,
                         },
@@ -81,7 +82,7 @@ function Chat() {
         if (!id) return;
         const payload: Message = {
             type: "chat-message",
-            userId: user.id,
+            from: user.id,
             to: id,
             content: msg,
         };

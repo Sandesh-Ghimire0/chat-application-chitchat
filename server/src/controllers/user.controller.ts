@@ -35,7 +35,7 @@ const getMessages = (req: Request, res: Response) => {
     }
 
     const msgs = messages.filter(
-        (msg) => msg.userId === userId || msg.to === userId
+        (msg) => msg.from === userId || msg.to === userId
     );
 
     return res.status(200).json({

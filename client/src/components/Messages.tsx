@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createMessagesQueryOptions } from "../queryOptions/createMessageQueryOptions";
 import { useState } from "react";
-import type { Message } from "../types/type";
+import type { ChatMessage } from "../types/type";
 
 interface MessageProps {
     userId: string;
@@ -23,17 +23,17 @@ function Messages({ userId, targetId, sendMessage }: MessageProps) {
             <ul className="flex-1 flex flex-col overflow-y-auto space-y-2 pb-4">
                 {messages
                     ?.filter(
-                        (msg: Message) =>
+                        (msg: ChatMessage) =>
                             // Only show messages belonging to this specific conversation
-                            (msg.userId === userId && msg.to === targetId) ||
-                            (msg.userId === targetId && msg.to === userId)
+                            (msg.from === userId && msg.to === targetId) ||
+                            (msg.from === targetId && msg.to === userId)
                     )
-                    .map((msg: Message) => (
+                    .map((msg: ChatMessage) => (
                         <li
                             key={msg.id}
                             className={`max-w-[70%] p-3 rounded-2xl ${
                                 // Blue/Right if I sent it, Gray/Left if Friend sent it
-                                msg.userId === userId
+                                msg.from === userId
                                     ? "bg-blue-700 text-white self-end rounded-br-none"
                                     : "bg-gray-200 text-black self-start rounded-bl-none"
                             }`}

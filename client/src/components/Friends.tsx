@@ -19,11 +19,11 @@ function Friends({ userId }: FriendProps) {
             <h2 className="text-xl font-semibold mb-4">Clients</h2>
             <ul className="space-y-2">
                 {friends?.map((friend) => (
-                    <li className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-blue-100 transition">
-                        <div
-                            key={friend.id}
-                            onClick={() => handleTargetClick(friend.id)}
-                        >
+                    <li
+                        key={friend.id}
+                        className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-blue-100 transition"
+                    >
+                        <div onClick={() => handleTargetClick(friend.id)}>
                             {friend.username}
                         </div>
                         {friend.isActive ? (
