@@ -1,20 +1,21 @@
-import express from 'express'
-import cors from 'cors'
+import express from "express";
+import cors from "cors";
+
+import dotenv from "dotenv";
+dotenv.config();
 
 export const app = express();
 
-app.get('/',(_,res)=>{
-    res.send("Server is running")
-})
+app.get("/", (_, res) => {
+    res.send("Server is running");
+});
 
-app.use(cors())
-app.use(express.json())
-
-
+app.use(cors());
+app.use(express.json());
 
 //====================================================
-import { authRouter } from './routes/authRoute.js';
-import { userRouter } from './routes/userRoute.js';
+import { authRouter } from "./routes/authRoute.js";
+import { userRouter } from "./routes/userRoute.js";
 
-app.use('/api/v1/auth',authRouter)
-app.use('/api/v1/user',userRouter)
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/user", userRouter);
