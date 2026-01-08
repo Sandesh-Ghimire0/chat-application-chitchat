@@ -1,12 +1,5 @@
-export interface User {
-    id: string;
-    username: string;
-    email: string;
-    password: string;
-    // messages: Message[];
-    isActive: boolean;
-    image: string;
-}
+import type { User } from "../types/type.js";
+
 
 export interface Message {
     id: string;
@@ -60,8 +53,7 @@ const users: User[] = [
         username:"Ram kumar",
         email:"ram@gmail.com",
         password:"123456",
-        // messages: user1Msg,
-        isActive: false,
+        isOnline: false,
         image:''
     },
     {
@@ -69,8 +61,7 @@ const users: User[] = [
         username:"Hari Das",
         email:"hari@gmail.com",
         password:"123456",
-        // messages: user2Msg,
-        isActive: false,
+        isOnline: false,
         image:''
     },
     {
@@ -78,8 +69,7 @@ const users: User[] = [
         username:"Rita oli",
         email:"rita@gmail.com",
         password:"123456",
-        // messages: user3Msg,
-        isActive: false,
+        isOnline: false,
         image:''
     },
     

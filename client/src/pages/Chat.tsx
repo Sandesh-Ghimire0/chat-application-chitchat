@@ -3,7 +3,7 @@ import type {  ConnectUserMessage, Friend, User } from "../types/type";
 import { useParams } from "react-router-dom";
 import Messages from "../components/Messages";
 import Friends from "../components/Friends";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Message } from "../types/type";
 
@@ -13,11 +13,13 @@ function Chat() {
     const { id } = useParams<{ id: string }>();
     const user = useAuthUser() as User;
 
+    const [targetName, setTargetName] = useState("")
+
     const queryClient = useQueryClient();
     const socketRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {
-        const socket = new WebSocket(`${WS_URL}`);
+        const socket = new WebSocket(`${WS_URL}`); 
         socketRef.current = socket;
 
         socket.onopen = () => {
@@ -37,10 +39,10 @@ function Chat() {
                 queryClient.setQueryData(["friends"], (old: Friend[]) => {
                     return old?.map((friend) => ({
                         ...friend,
-                        isActive:
+                        isOnline:
                             data.activeUserId === friend.id
                                 ? true
-                                : friend.isActive,
+                                : friend.isOnline,
                     }));
                 });
             }
@@ -49,10 +51,10 @@ function Chat() {
                 queryClient.setQueryData(["friends"], (old: Friend[]) => {
                     return old?.map((friend) => ({
                         ...friend,
-                        isActive:
+                        isOnline:
                             data.deactiveUserId === friend.id
                                 ? false
-                                : friend.isActive,
+                                : friend.isOnline,
                     }));
                 });
             }
@@ -95,7 +97,7 @@ function Chat() {
         <>
             <div className="flex h-full p-4 gap-4">
                 {/* Left Section */}
-                <Friends userId={user.id} />
+                <Friends userId={user.id} setTargetName={setTargetName}/>
 
                 {/* Right Section */}
                 <div className="flex-1 bg-white rounded-lg shadow p-4 flex flex-col">
@@ -104,6 +106,7 @@ function Chat() {
                             userId={user.id}
                             targetId={id}
                             sendMessage={sendMessage}
+                            targetName={targetName}
                         />
                     ) : (
                         <div className="text-4xl font-semibold">

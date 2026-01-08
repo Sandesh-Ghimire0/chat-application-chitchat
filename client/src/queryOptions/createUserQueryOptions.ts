@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { User } from "../types/client";
+import type { User } from "../types/type";
 import { queryOptions } from "@tanstack/react-query";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -20,7 +20,7 @@ async function fetchCurrentUser(): Promise<User> {
                 Authorization: `Bearer ${token}`,
             },
         });
-        return res.data;
+        return res.data.data;
     } catch (error) {
         console.log("Error when fetching current user ", error);
         throw error;

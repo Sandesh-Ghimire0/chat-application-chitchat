@@ -14,8 +14,8 @@ app.use(cors());
 app.use(express.json());
 
 //====================================================
-import { authRouter } from "./routes/authRoute.js";
-import { userRouter } from "./routes/userRoute.js";
+import { authRouter } from "./routes/auth.route.js";
+import { userRouter } from "./routes/user.route.js";
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);

@@ -7,14 +7,14 @@ export interface User {
     id: string;
     username: string;
     email: string;
-    image: string;
+    image?: string;
     token?: string;
 }
 
 export interface Friend {
     id: string;
     username: string;
-    isActive: boolean;
+    isOnline: boolean;
     image: string;
 }
 

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createUserQueryOptions } from "../queryOptions/createUserQueryOptions";
 
 export default function MainLayout() {
-    const { data, isPending } = useQuery(createUserQueryOptions());
+    const { isPending } = useQuery(createUserQueryOptions());
 
     if (isPending) {
         return <div className="text-3xl font-semibold">Loading....</div>;

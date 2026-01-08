@@ -1,16 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFriendsQueryOptions } from "../queryOptions/createFriendsQueryOptions";
 import { useNavigate } from "react-router-dom";
+import type { Friend } from "../types/type";
 
 interface FriendProps {
     userId: string;
+    setTargetName: (name: string) => void
 }
 
-function Friends({ userId }: FriendProps) {
+function Friends({ userId, setTargetName }: FriendProps) {
     const { data: friends } = useQuery(createFriendsQueryOptions(userId));
     const navigate = useNavigate();
 
-    const handleTargetClick = (targetId: string) => {
+    const handleTargetClick = (name: string, targetId: string) => {
+        setTargetName(name)
         navigate(`/chat/${targetId}`);
     };
 
@@ -18,15 +21,15 @@ function Friends({ userId }: FriendProps) {
         <div className="w-1/4 bg-white rounded-lg shadow p-4 overflow-y-auto">
             <h2 className="text-xl font-semibold mb-4">Clients</h2>
             <ul className="space-y-2">
-                {friends?.map((friend) => (
+                {friends?.map((friend: Friend) => (
                     <li
                         key={friend.id}
                         className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-blue-100 transition"
                     >
-                        <div onClick={() => handleTargetClick(friend.id)}>
+                        <div onClick={() => handleTargetClick(friend.username,friend.id)}>
                             {friend.username}
                         </div>
-                        {friend.isActive ? (
+                        {friend.isOnline ? (
                             <div className="text-green-500 text-sm">Active</div>
                         ) : (
                             ""

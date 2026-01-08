@@ -4,6 +4,7 @@ import Chat from "./pages/Chat";
 import ChatRoom from "./pages/ChatRoom";
 import VideoCall from "./pages/VideoCall";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
 export default function App() {
     return (
@@ -18,7 +19,9 @@ export default function App() {
                 </Route>
 
                 {/* Routes WITHOUT navbar */}
-                <Route path="/" element={<Login />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/" element={<Signup />} />
             </Routes>
         </BrowserRouter>
     );

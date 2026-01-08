@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import type { Server as HttpServer } from "http";
-import type { ChatMessage, ClientSocket } from "../types/type.js";
+import type { ActiveUserMessage, ChatMessage, ClientSocket, DeactiveUserMessage } from "../types/type.js";
 import type { Message } from "../types/type.js";
 import { redisService } from "./redis.service.js";
 import { messages, users } from "../data/data.js";
@@ -63,9 +63,9 @@ export class WebSocketService {
         this.myClients.set(userId, socket);
         const user = users.find((user) => user.id === userId);
         if (user) {
-            user.isActive = true;
+            user.isOnline = true;
         }
-        console.log(`${userId} connected`);
+        console.log(`${userId} connected`); 
         redisService.publish(
             "CLIENTS",
             JSON.stringify({ type: "connect", userId })
@@ -81,7 +81,7 @@ export class WebSocketService {
         if (type === "disconnect") {
             const user = users.find((user) => user.id === userId);
             if (user) {
-                user.isActive = false;
+                user.isOnline = false;
             }
             const index = this.otherClients.indexOf(userId);
             if (index !== -1) {
@@ -103,7 +103,7 @@ export class WebSocketService {
             const currSocket = client as ClientSocket;
 
             if (currSocket.userId !== userId) {
-                const payload =
+                const payload: ActiveUserMessage | DeactiveUserMessage =
                     type === "connect"
                         ? {
                               type: "active-user",

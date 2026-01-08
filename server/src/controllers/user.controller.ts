@@ -1,46 +1,62 @@
 import type { Request, Response } from "express";
-import { messages, users } from "../data/data.js";
+import prisma from "../config/db.js";
+import { ApiError } from "../utils/apiError.js";
+import { ApiResponse } from "../utils/apiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
-const getFriends = (req: Request, res: Response) => {
+const getFriends = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.query;
 
     if (!userId) {
-        return res.status(401).json({
-            message: "userId is required",
-        });
+        throw new ApiError(400, "User ID is required");
     }
 
-    // remover user with userId at first using filter and than  return transform object using map
-    const friends = users
-        .filter((user) => user.id !== userId)
-        .map((user) => ({
-            id: user.id,
-            username: user.username,
-            isActive: user.isActive,
-            image: user.image,
-        }));
+    const friends = await prisma.user.findMany({
+        where: {
+            id: {
+                not: userId as string,
+            },
+        },
 
-    return res.status(200).json({
-        data: friends,
+        omit: {
+            password: true,
+        },
     });
-};
 
-const getMessages = (req: Request, res: Response) => {
+    if (!friends) {
+        throw new ApiError(
+            501,
+            "Something went wrong while retrieving friends....!!!"
+        );
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, friends, "Friends retrieved successfull.!!!")
+        );
+});
+
+const getMessages = asyncHandler(async (req, res) => {
     const { userId } = req.query;
 
     if (!userId) {
-        return res.status(401).json({
-            message: "userId is required",
-        });
+        throw new ApiError(400, "User ID is required");
     }
 
-    const msgs = messages.filter(
-        (msg) => msg.from === userId || msg.to === userId
-    );
-
-    return res.status(200).json({
-        data: msgs,
+    const messages = await prisma.message.findMany({
+        where: {
+            OR: [{ from: userId as string }, { to: userId as string }],
+        },
     });
-};
+
+    if (!messages) {
+        throw new ApiError(
+            501,
+            "Something went wrong while retrieving messages....!!!"
+        );
+    }
+
+    return res.status(200).json();
+});
 
 export { getFriends, getMessages };
