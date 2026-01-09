@@ -14,7 +14,7 @@ export function createFriendsQueryOptions(userId: string) {
 
 
 async function getFriends(userId: string): Promise<Friend[]> {
-    const token = JSON.parse(localStorage.getItem("token") as string);
+    const token = JSON.parse(sessionStorage.getItem("token") as string);
 
     try {
         const res =await axios.get(`${BASE_URL}/api/v1/user/friends?userId=${userId}`, {

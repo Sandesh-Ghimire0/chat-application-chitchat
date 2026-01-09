@@ -1,15 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
-import { createFriendsQueryOptions } from "../queryOptions/createFriendsQueryOptions";
 import { useNavigate } from "react-router-dom";
 import type { Friend } from "../types/type";
 
 interface FriendProps {
+    friends:Friend[] | undefined
     userId: string;
     setTargetName: (name: string) => void
 }
 
-function Friends({ userId, setTargetName }: FriendProps) {
-    const { data: friends } = useQuery(createFriendsQueryOptions(userId));
+function Friends({ friends, setTargetName }: FriendProps) {
     const navigate = useNavigate();
 
     const handleTargetClick = (name: string, targetId: string) => {

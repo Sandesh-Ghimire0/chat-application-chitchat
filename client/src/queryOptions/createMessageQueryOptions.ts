@@ -12,7 +12,7 @@ export function createMessagesQueryOptions(userId: string) {
 }
 
 async function getMessages(userId: string): Promise<ChatMessage[]> {
-    const token = JSON.parse(localStorage.getItem("token") as string);
+    const token = JSON.parse(sessionStorage.getItem("token") as string);
 
     try {
         const res = await axios.get(

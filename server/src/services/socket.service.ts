@@ -1,10 +1,14 @@
 import { WebSocketServer } from "ws";
 import type { Server as HttpServer } from "http";
-import type { ActiveUserMessage, ChatMessage, ClientSocket, DeactiveUserMessage } from "../types/type.js";
+import type {
+    ActiveUserMessage,
+    ChatMessage,
+    ClientSocket,
+    DeactiveUserMessage,
+} from "../types/type.js";
 import type { Message } from "../types/type.js";
 import { redisService } from "./redis.service.js";
-import { messages, users } from "../data/data.js";
-import { nanoid } from "nanoid";
+import prisma from "../config/db.js";
 
 export class WebSocketService {
     private wss: WebSocketServer;
@@ -39,10 +43,14 @@ export class WebSocketService {
                 this.activateUser(data.userId, socket);
             }
 
-            if (data.type === "chat-message" && this.myClients.has(data.to)) {
-                this.onRedisMessage(rawData.toString());
-            } else {
-                redisService.publish("MESSAGES", rawData.toString());
+            if (data.type === "chat-message") {
+                // receiver is on this server
+                if (this.myClients.has(data.to)) {
+                    await this.onRedisMessage(rawData.toString());
+                } else {
+                    // receiver is on another server
+                    redisService.publish("MESSAGES", rawData.toString());
+                }
             }
 
             if (data.type === "disconnect") {
@@ -58,14 +66,17 @@ export class WebSocketService {
         });
     }
 
-    private activateUser(userId: string, socket: ClientSocket) {
+    private async activateUser(userId: string, socket: ClientSocket) {
         socket.userId = userId;
         this.myClients.set(userId, socket);
-        const user = users.find((user) => user.id === userId);
-        if (user) {
-            user.isOnline = true;
-        }
-        console.log(`${userId} connected`); 
+        // updating the user online status to active
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                isOnline: true,
+            },
+        });
+        console.log(`${userId} connected`);
         redisService.publish(
             "CLIENTS",
             JSON.stringify({ type: "connect", userId })
@@ -75,18 +86,16 @@ export class WebSocketService {
     /*============================================================================================================
     //                                              listen to CLIENTS channel
     ===============================================================================================================*/
-    private onRedisClients(redisClients: string) {
+    private async onRedisClients(redisClients: string) {
         const { type, userId } = JSON.parse(redisClients);
 
         if (type === "disconnect") {
-            const user = users.find((user) => user.id === userId);
-            if (user) {
-                user.isOnline = false;
-            }
-            const index = this.otherClients.indexOf(userId);
-            if (index !== -1) {
-                this.otherClients.splice(index, 1);
-            }
+            await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    isOnline: false,
+                },
+            });
         }
 
         if (type === "connect" && !this.myClients.has(userId)) {
@@ -96,7 +105,7 @@ export class WebSocketService {
     }
 
     /*============================================================================================================
-    //                                              send all clients to each server
+    //                              send online or offline client info to each server
     ===============================================================================================================*/
     private boardcastUserConnection(type: string, userId: string) {
         this.wss.clients.forEach((client) => {
@@ -122,25 +131,25 @@ export class WebSocketService {
     /*============================================================================================================
     //                                               Listen to MESSAGES channel
     ===============================================================================================================*/
-    private onRedisMessage(redisMessage: string) {
+    private async onRedisMessage(redisMessage: string) {
         const data: ChatMessage = JSON.parse(redisMessage);
         const { from, to, content } = data;
 
-        const msgId: string = nanoid();
-        const msg: Omit<ChatMessage,'type'> = {
-            id: msgId,
-            from,
-            to,
-            content,
-        };
-        messages.push(msg);
+        const msg = await prisma.message.create({
+            data: {
+                from,
+                to,
+                content,
+            },
+        });
 
         const payload: Message = {
             type: "chat-message",
-            id: msgId,
-            from,
-            to,
-            content,
+            id: msg.id,
+            from: msg.from,
+            to: msg.to,
+            content: msg.content,
+            createdAt: msg.createdAt,
         };
 
         // send to receiver

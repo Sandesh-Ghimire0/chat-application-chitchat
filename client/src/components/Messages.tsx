@@ -7,18 +7,15 @@ interface MessageProps {
     userId: string;
     targetId: string;
     sendMessage: (msg: string) => void;
-    targetName: string;
+
 }
 
-function Messages({ userId, targetId, sendMessage, targetName }: MessageProps) {
+function Messages({ userId, targetId, sendMessage }: MessageProps) {
     const [messageInput, setMessageInput] = useState<string>("");
     const { data: messages } = useQuery(createMessagesQueryOptions(userId));
 
     return (
         <>
-            <h2 className="text-xl font-semibold mb-4">
-                Send message to {targetName}
-            </h2>
 
             {/* Messages */}
             <ul className="flex-1 flex flex-col overflow-y-auto space-y-2 pb-4">

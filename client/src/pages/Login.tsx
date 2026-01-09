@@ -13,7 +13,7 @@ function Login() {
     const loginMutation = useMutation({
         mutationFn: (user: LoginUser) => loginUser(user),
         onSuccess: (data) => {
-            localStorage.setItem("token",JSON.stringify(data.token))
+            sessionStorage.setItem("token",JSON.stringify(data.token))
             navigate("/chat");
         },
         onError: (error) => {

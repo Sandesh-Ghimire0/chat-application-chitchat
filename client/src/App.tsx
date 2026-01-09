@@ -21,7 +21,7 @@ export default function App() {
                 {/* Routes WITHOUT navbar */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
-                <Route path="/" element={<Signup />} />
+                <Route path="/" element={<Login />} />
             </Routes>
         </BrowserRouter>
     );

@@ -11,7 +11,7 @@ export interface User {
     password: string;
     isOnline?: boolean;
     image?: string;
-    createdAt?: string
+    createdAt?: Date
 }
 
 export interface ConnectUserMessage {
@@ -40,6 +40,8 @@ export interface ChatMessage {
     from: string;
     to: string;
     content: string;
+    createdAt?: Date
+
 }
 
 export type Message = ConnectUserMessage | DisconnectUserMessage | ChatMessage;
