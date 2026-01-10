@@ -18,7 +18,7 @@ model User {
   email String  @unique
   password String 
   isOnline Boolean @default(false)
-  image String?
+  image String @default("https://res.cloudinary.com/dkwy8fx8o/image/upload/v1768022719/profile_fxdqfj.png")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
