@@ -30,7 +30,6 @@ const signUp = asyncHandler(async (req, res) => {
     let imageUrl: string;
     if (imageLocalPath) {
         const cloudinaryResponse = await uploadOnCloudinary(imageLocalPath);
-        console.log("cloudinary path :", cloudinaryResponse?.secure_url);
         imageUrl =
             cloudinaryResponse?.secure_url ??
             "https://res.cloudinary.com/dkwy8fx8o/image/upload/v1768022719/profile_fxdqfj.png";

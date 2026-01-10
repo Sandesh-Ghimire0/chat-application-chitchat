@@ -16,13 +16,9 @@ export async function loginUser(user: {
     }
 }
 
-export async function signupUser(user: {
-    username: string;
-    email: string;
-    password: string;
-}): Promise<User> {
+export async function signupUser(formData: FormData): Promise<User> {
     try {
-        const res = await axios.post(`${BASE_URL}/api/v1/auth/signup`, user);
+        const res = await axios.post(`${BASE_URL}/api/v1/auth/signup`, formData);
         return res.data.data;
     } catch (error) {
         console.log("User Login Error :: ", error);

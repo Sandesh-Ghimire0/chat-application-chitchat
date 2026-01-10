@@ -3,21 +3,16 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { signupUser } from "../services/auth";
 
-interface SignupUser {
-    username: string;
-    password: string;
-    email: string;
-}
-
 function Signup() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [image, setImage] = useState<File | null>(null);
 
     const navigate = useNavigate();
 
     const signupMutation = useMutation({
-        mutationFn: (user: SignupUser) => signupUser(user),
+        mutationFn: (formData: FormData) => signupUser(formData),
         onSuccess: () => {
             navigate("/login");
         },
@@ -28,7 +23,18 @@ function Signup() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        signupMutation.mutate({ username, email, password });
+
+        // cannot use JSON, since image upload requires FormData
+        const formData = new FormData();
+        formData.append("username", username);
+        formData.append("email", email);
+        formData.append("password", password);
+
+        if (image) {
+            formData.append("image", image);
+        }
+
+        signupMutation.mutate(formData);
     };
 
     return (
@@ -79,6 +85,22 @@ function Signup() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+
+                <div className="mb-6">
+                    <label className="block text-sm font-medium mb-1">
+                        Profile Image
+                    </label>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                                setImage(e.target.files[0]);
+                            }
+                        }}
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
